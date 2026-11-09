@@ -1,98 +1,109 @@
-import * as Device from "expo-device";
-import { Platform, StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AnimatedIcon } from "@/components/animated-icon";
-import { HintRow } from "@/components/hint-row";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { WebBadge } from "@/components/web-badge";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
-
-function getDevMenuHint() {
-  if (Platform.OS === "web") {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === "android" ? "cmd+m (or ctrl+m)" : "cmd+d";
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { obtenerLugares } from "../servicios/lugares";
+import type { Lugar } from "../tipos/lugares";
 
 export default function HomeScreen() {
+  const [lugares, setLugares] = useState<Lugar[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function cargarLugares() {
+      try {
+        const datos = await obtenerLugares();
+        setLugares(datos);
+      } catch {
+        setError("No se pudieron cargar los lugares.");
+      } finally {
+        setCargando(false);
+      }
+    }
+
+    void cargarLugares();
+  }, []);
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo Grupo 12
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.contenedor}>
+      <Text style={styles.titulo}>Mi Ciudad Colón</Text>
+      <Text style={styles.subtitulo}>Descubrí los atractivos turísticos</Text>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === "web" && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      {cargando ? (
+        <ActivityIndicator size="large" />
+      ) : error ? (
+        <Text style={styles.error}>{error}</Text>
+      ) : (
+        <FlatList
+          data={lugares}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.lista}
+          ListEmptyComponent={<Text>No hay lugares disponibles.</Text>}
+          renderItem={({ item }) => (
+            <View style={styles.tarjeta}>
+              <Text style={styles.nombre}>{item.nombre}</Text>
+              <Text style={styles.descripcion}>{item.descripcionCorta}</Text>
+              <Text style={styles.direccion}>{item.direccion}</Text>
+            </View>
+          )}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  contenedor: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
+    backgroundColor: "#F5F7F5",
+    padding: 20,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: "center",
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+  titulo: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#22543D",
+    marginBottom: 8,
   },
-  heroSection: {
-    alignItems: "center",
-    justifyContent: "center",
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  subtitulo: {
+    fontSize: 16,
+    color: "#555555",
+    marginBottom: 24,
   },
-  title: {
-    textAlign: "center",
+  lista: {
+    paddingBottom: 24,
   },
-  code: {
-    textTransform: "uppercase",
+  tarjeta: {
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    borderRadius: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#E0E5E0",
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: "stretch",
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  nombre: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#22543D",
+    marginBottom: 8,
+  },
+  descripcion: {
+    fontSize: 15,
+    color: "#444444",
+    marginBottom: 8,
+  },
+  direccion: {
+    fontSize: 13,
+    color: "#777777",
+  },
+  error: {
+    color: "#B00020",
+    fontSize: 16,
   },
 });
