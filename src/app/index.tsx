@@ -1,10 +1,11 @@
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
-  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -47,11 +48,25 @@ export default function HomeScreen() {
           contentContainerStyle={styles.lista}
           ListEmptyComponent={<Text>No hay lugares disponibles.</Text>}
           renderItem={({ item }) => (
-            <View style={styles.tarjeta}>
+            <Pressable
+              style={styles.tarjeta}
+              onPress={() => {
+                console.log("Tocaste el lugar:", item.nombre);
+
+                router.push({
+                  pathname: "/lugar/[id]",
+                  params: { id: item.id },
+                });
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Ver detalles de ${item.nombre}`}
+            >
               <Text style={styles.nombre}>{item.nombre}</Text>
+
               <Text style={styles.descripcion}>{item.descripcionCorta}</Text>
+
               <Text style={styles.direccion}>{item.direccion}</Text>
-            </View>
+            </Pressable>
           )}
         />
       )}
