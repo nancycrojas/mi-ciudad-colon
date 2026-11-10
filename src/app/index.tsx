@@ -4,18 +4,39 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { obtenerCategorias } from "../servicios/categorias";
 import { obtenerLugares } from "../servicios/lugares";
+import type { Categoria } from "../tipos/categorias";
 import type { Lugar } from "../tipos/lugares";
 
 export default function HomeScreen() {
   const [lugares, setLugares] = useState<Lugar[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<
+    string | null
+  >(null);
+
+  const lugaresFiltrados = lugares.filter((lugar) => {
+    const coincideNombre = lugar.nombre
+      .toLowerCase()
+      .includes(busqueda.trim().toLowerCase());
+
+    const coincideCategoria =
+      categoriaSeleccionada === null ||
+      lugar.categoriaId === categoriaSeleccionada;
+
+    return coincideNombre && coincideCategoria;
+  });
 
   useEffect(() => {
     async function cargarLugares() {
@@ -32,10 +53,91 @@ export default function HomeScreen() {
     void cargarLugares();
   }, []);
 
+  useEffect(() => {
+    let activo = true;
+
+    async function cargarCategorias() {
+      try {
+        const datos = await obtenerCategorias();
+
+        if (activo) {
+          setCategorias(datos);
+        }
+      } catch (error) {
+        console.error("Error al cargar categorías:", error);
+      }
+    }
+
+    void cargarCategorias();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   return (
     <SafeAreaView style={styles.contenedor}>
       <Text style={styles.titulo}>Mi Ciudad Colón</Text>
       <Text style={styles.subtitulo}>Descubrí los atractivos turísticos</Text>
+
+      <TextInput
+        style={styles.buscador}
+        placeholder="Buscar lugares turísticos..."
+        placeholderTextColor="#777777"
+        value={busqueda}
+        onChangeText={setBusqueda}
+        autoCorrect={false}
+        accessibilityLabel="Buscar lugares turísticos"
+      />
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.contenedorCategorias}
+        contentContainerStyle={styles.listaCategorias}
+      >
+        <Pressable
+          onPress={() => setCategoriaSeleccionada(null)}
+          style={[
+            styles.botonCategoria,
+            categoriaSeleccionada === null && styles.botonCategoriaSeleccionada,
+          ]}
+        >
+          <Text
+            style={[
+              styles.textoCategoria,
+              categoriaSeleccionada === null &&
+                styles.textoCategoriaSeleccionada,
+            ]}
+          >
+            Todas
+          </Text>
+        </Pressable>
+
+        {categorias.map((categoria) => {
+          const seleccionada = categoriaSeleccionada === categoria.id;
+
+          return (
+            <Pressable
+              key={categoria.id}
+              onPress={() => setCategoriaSeleccionada(categoria.id)}
+              style={[
+                styles.botonCategoria,
+                seleccionada && styles.botonCategoriaSeleccionada,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.textoCategoria,
+                  seleccionada && styles.textoCategoriaSeleccionada,
+                ]}
+              >
+                {categoria.nombre}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
       {cargando ? (
         <ActivityIndicator size="large" />
@@ -43,7 +145,7 @@ export default function HomeScreen() {
         <Text style={styles.error}>{error}</Text>
       ) : (
         <FlatList
-          data={lugares}
+          data={lugaresFiltrados}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.lista}
           ListEmptyComponent={<Text>No hay lugares disponibles.</Text>}
@@ -51,8 +153,6 @@ export default function HomeScreen() {
             <Pressable
               style={styles.tarjeta}
               onPress={() => {
-                console.log("Tocaste el lugar:", item.nombre);
-
                 router.push({
                   pathname: "/lugar/[id]",
                   params: { id: item.id },
@@ -120,5 +220,56 @@ const styles = StyleSheet.create({
   error: {
     color: "#B00020",
     fontSize: 16,
+  },
+  buscador: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#CCCCCC",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#333333",
+    marginBottom: 16,
+  },
+
+  contenedorCategorias: {
+    flexGrow: 0,
+    marginBottom: 16,
+  },
+
+  listaCategorias: {
+    gap: 8,
+    paddingRight: 12,
+    paddingTop: 6,
+    paddingBottom: 10,
+    alignItems: "center",
+  },
+
+  botonCategoria: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#CCCCCC",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  botonCategoriaSeleccionada: {
+    backgroundColor: "#22543D",
+    borderColor: "#22543D",
+  },
+  textoCategoria: {
+    color: "#333333",
+    fontSize: 14,
+    lineHeight: 20,
+    includeFontPadding: true,
+    textAlign: "center",
+  },
+  textoCategoriaSeleccionada: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
 });
