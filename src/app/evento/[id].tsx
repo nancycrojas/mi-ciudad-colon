@@ -4,12 +4,15 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { obtenerEventoPorId } from "../../servicios/eventos";
+import { obtenerLugarPorId } from "../../servicios/lugares";
 import type { Evento } from "../../tipos/eventos";
+import type { Lugar } from "../../tipos/lugares";
 
 export default function DetalleEventoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [evento, setEvento] = useState<Evento | null>(null);
+  const [lugarAsociado, setLugarAsociado] = useState<Lugar | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,8 +27,15 @@ export default function DetalleEventoScreen() {
       try {
         const datos = await obtenerEventoPorId(id);
 
+        let lugar: Lugar | null = null;
+
+        if (datos?.lugarId) {
+          lugar = await obtenerLugarPorId(datos.lugarId);
+        }
+
         if (activo) {
           setEvento(datos);
+          setLugarAsociado(lugar);
         }
       } catch {
         if (activo) {
@@ -91,11 +101,14 @@ export default function DetalleEventoScreen() {
         </Text>
 
         <Text style={styles.seccion}>Ubicación</Text>
+
         <Text style={styles.texto}>
-          {evento.direccionLibre ??
-            (evento.lugarId
-              ? "Lugar asociado al catálogo turístico"
-              : "Ubicación no informada")}
+          {lugarAsociado
+            ? `${lugarAsociado.nombre}\n${lugarAsociado.direccion}`
+            : (evento.direccionLibre ??
+              (evento.lugarId
+                ? "No se pudo obtener la información del lugar."
+                : "Ubicación no informada"))}
         </Text>
 
         <Text style={styles.seccion}>Precio</Text>
