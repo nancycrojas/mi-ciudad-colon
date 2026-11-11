@@ -1,0 +1,58 @@
+import type { Evento } from "../tipos/eventos";
+
+export const eventos: Evento[] = [
+  {
+    id: "evt-017",
+    titulo: "Peña en el anfiteatro",
+    descripcion: "Noche de folclore con artistas de la región.",
+    lugarId: null,
+    direccionLibre: "Anfiteatro de Colón, Entre Ríos",
+    coordenadas: null,
+    inicio: "2026-11-14T21:00:00-03:00",
+    fin: "2026-11-15T02:00:00-03:00",
+    imagenUrl: null,
+    precio: 0,
+    estado: "programado",
+  },
+  {
+    id: "evt-018",
+    titulo: "Feria de artesanos",
+    descripcion: "Exposición de artesanías y productos regionales.",
+    lugarId: null,
+    direccionLibre: "Costanera de Colón, Entre Ríos",
+    coordenadas: null,
+    inicio: "2026-11-16T17:00:00-03:00",
+    fin: "2026-11-16T22:00:00-03:00",
+    imagenUrl: null,
+    precio: 0,
+    estado: "programado",
+  },
+  {
+    id: "evt-019",
+    titulo: "Visita guiada por la ciudad",
+    descripcion:
+      "Recorrido guiado por los principales atractivos históricos de Colón.",
+    lugarId: null,
+    direccionLibre: "Centro de Colón, Entre Ríos",
+    coordenadas: null,
+    inicio: "2026-11-17T10:00:00-03:00",
+    fin: "2026-11-17T12:00:00-03:00",
+    imagenUrl: null,
+    precio: 0,
+    estado: "suspendido",
+  },
+  {
+    id: "evt-020",
+    titulo: "Avistaje de aves",
+    descripcion:
+      "Actividad de observación de aves y reconocimiento de especies nativas.",
+    lugarId: "lug-006",
+    direccionLibre: null,
+    coordenadas: null,
+    inicio: "2026-11-18T08:00:00-03:00",
+    fin: "2026-11-18T10:00:00-03:00",
+    imagenUrl: null,
+    precio: null,
+    estado: "programado",
+  },
+];

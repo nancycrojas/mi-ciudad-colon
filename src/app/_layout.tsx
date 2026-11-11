@@ -22,6 +22,11 @@ export default function RootLayout() {
         />
 
         <Stack.Screen name="explore" options={{ title: "Explorar" }} />
+        <Stack.Screen name="agenda" options={{ title: "Agenda de eventos" }} />
+        <Stack.Screen
+          name="evento/[id]"
+          options={{ title: "Detalle del evento" }}
+        />
       </Stack>
     </ThemeProvider>
   );

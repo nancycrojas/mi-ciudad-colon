@@ -80,6 +80,15 @@ export default function HomeScreen() {
       <Text style={styles.titulo}>Mi Ciudad Colón</Text>
       <Text style={styles.subtitulo}>Descubrí los atractivos turísticos</Text>
 
+      <Pressable
+        style={styles.botonAgenda}
+        onPress={() => router.push("/agenda")}
+        accessibilityRole="button"
+        accessibilityLabel="Ver agenda de eventos"
+      >
+        <Text style={styles.textoBotonAgenda}>Ver agenda de eventos</Text>
+      </Pressable>
+
       <TextInput
         style={styles.buscador}
         placeholder="Buscar lugares turísticos..."
@@ -235,6 +244,7 @@ const styles = StyleSheet.create({
 
   contenedorCategorias: {
     flexGrow: 0,
+    height: 80,
     marginBottom: 16,
   },
 
@@ -271,5 +281,22 @@ const styles = StyleSheet.create({
   textoCategoriaSeleccionada: {
     color: "#FFFFFF",
     fontWeight: "bold",
+  },
+
+  botonAgenda: {
+    backgroundColor: "#22543D",
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+
+  textoBotonAgenda: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
