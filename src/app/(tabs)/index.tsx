@@ -11,10 +11,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { obtenerCategorias } from "../servicios/categorias";
-import { obtenerLugares } from "../servicios/lugares";
-import type { Categoria } from "../tipos/categorias";
-import type { Lugar } from "../tipos/lugares";
+import { obtenerCategorias } from "../../servicios/categorias";
+import { obtenerLugares } from "../../servicios/lugares";
+import type { Categoria } from "../../tipos/categorias";
+import type { Lugar } from "../../tipos/lugares";
 
 export default function HomeScreen() {
   const [lugares, setLugares] = useState<Lugar[]>([]);

@@ -9,8 +9,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { router } from "expo-router";
-import { obtenerEventos } from "../servicios/eventos";
-import type { Evento } from "../tipos/eventos";
+import { obtenerEventos } from "../../servicios/eventos";
+import type { Evento } from "../../tipos/eventos";
 
 export default function AgendaScreen() {
   const [eventos, setEventos] = useState<Evento[]>([]);

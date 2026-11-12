@@ -14,15 +14,13 @@ export default function RootLayout() {
       <AnimatedSplashOverlay />
 
       <Stack>
-        <Stack.Screen name="index" options={{ title: "Mi Ciudad Colón" }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
         <Stack.Screen
           name="lugar/[id]"
           options={{ title: "Detalle del lugar" }}
         />
 
-        <Stack.Screen name="explore" options={{ title: "Explorar" }} />
-        <Stack.Screen name="agenda" options={{ title: "Agenda de eventos" }} />
         <Stack.Screen
           name="evento/[id]"
           options={{ title: "Detalle del evento" }}
