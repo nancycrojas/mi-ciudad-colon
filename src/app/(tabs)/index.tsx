@@ -8,9 +8,11 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import MapaLugares from "../../components/MapaLugares";
 import { obtenerCategorias } from "../../servicios/categorias";
 import { obtenerLugares } from "../../servicios/lugares";
 import type { Categoria } from "../../tipos/categorias";
@@ -38,19 +40,39 @@ export default function HomeScreen() {
     return coincideNombre && coincideCategoria;
   });
 
+  function abrirDetalleLugar(id: string) {
+    router.push({
+      pathname: "/lugar/[id]",
+      params: { id },
+    });
+  }
+
   useEffect(() => {
+    let activo = true;
+
     async function cargarLugares() {
       try {
         const datos = await obtenerLugares();
-        setLugares(datos);
+
+        if (activo) {
+          setLugares(datos);
+        }
       } catch {
-        setError("No se pudieron cargar los lugares.");
+        if (activo) {
+          setError("No se pudieron cargar los lugares.");
+        }
       } finally {
-        setCargando(false);
+        if (activo) {
+          setCargando(false);
+        }
       }
     }
 
     void cargarLugares();
+
+    return () => {
+      activo = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -77,108 +99,127 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.contenedor}>
-      <Text style={styles.titulo}>Mi Ciudad Colón</Text>
-      <Text style={styles.subtitulo}>Descubrí los atractivos turísticos</Text>
+      <FlatList
+        data={cargando || error ? [] : lugaresFiltrados}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.lista}
+        keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={
+          <View>
+            <Text style={styles.titulo}>Mi Ciudad Colón</Text>
 
-      <Pressable
-        style={styles.botonAgenda}
-        onPress={() => router.push("/agenda")}
-        accessibilityRole="button"
-        accessibilityLabel="Ver agenda de eventos"
-      >
-        <Text style={styles.textoBotonAgenda}>Ver agenda de eventos</Text>
-      </Pressable>
+            <Text style={styles.subtitulo}>
+              Descubrí los atractivos turísticos
+            </Text>
 
-      <TextInput
-        style={styles.buscador}
-        placeholder="Buscar lugares turísticos..."
-        placeholderTextColor="#777777"
-        value={busqueda}
-        onChangeText={setBusqueda}
-        autoCorrect={false}
-        accessibilityLabel="Buscar lugares turísticos"
-      />
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.contenedorCategorias}
-        contentContainerStyle={styles.listaCategorias}
-      >
-        <Pressable
-          onPress={() => setCategoriaSeleccionada(null)}
-          style={[
-            styles.botonCategoria,
-            categoriaSeleccionada === null && styles.botonCategoriaSeleccionada,
-          ]}
-        >
-          <Text
-            style={[
-              styles.textoCategoria,
-              categoriaSeleccionada === null &&
-                styles.textoCategoriaSeleccionada,
-            ]}
-          >
-            Todas
-          </Text>
-        </Pressable>
-
-        {categorias.map((categoria) => {
-          const seleccionada = categoriaSeleccionada === categoria.id;
-
-          return (
             <Pressable
-              key={categoria.id}
-              onPress={() => setCategoriaSeleccionada(categoria.id)}
-              style={[
-                styles.botonCategoria,
-                seleccionada && styles.botonCategoriaSeleccionada,
-              ]}
+              style={styles.botonAgenda}
+              onPress={() => router.push("/agenda")}
+              accessibilityRole="button"
+              accessibilityLabel="Ver agenda de eventos"
             >
-              <Text
+              <Text style={styles.textoBotonAgenda}>Ver agenda de eventos</Text>
+            </Pressable>
+
+            <TextInput
+              style={styles.buscador}
+              placeholder="Buscar lugares turísticos..."
+              placeholderTextColor="#777777"
+              value={busqueda}
+              onChangeText={setBusqueda}
+              autoCorrect={false}
+              accessibilityLabel="Buscar lugares turísticos"
+            />
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.contenedorCategorias}
+              contentContainerStyle={styles.listaCategorias}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Pressable
+                onPress={() => setCategoriaSeleccionada(null)}
                 style={[
-                  styles.textoCategoria,
-                  seleccionada && styles.textoCategoriaSeleccionada,
+                  styles.botonCategoria,
+                  categoriaSeleccionada === null &&
+                    styles.botonCategoriaSeleccionada,
                 ]}
               >
-                {categoria.nombre}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+                <Text
+                  style={[
+                    styles.textoCategoria,
+                    categoriaSeleccionada === null &&
+                      styles.textoCategoriaSeleccionada,
+                  ]}
+                >
+                  Todas
+                </Text>
+              </Pressable>
 
-      {cargando ? (
-        <ActivityIndicator size="large" />
-      ) : error ? (
-        <Text style={styles.error}>{error}</Text>
-      ) : (
-        <FlatList
-          data={lugaresFiltrados}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.lista}
-          ListEmptyComponent={<Text>No hay lugares disponibles.</Text>}
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.tarjeta}
-              onPress={() => {
-                router.push({
-                  pathname: "/lugar/[id]",
-                  params: { id: item.id },
-                });
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`Ver detalles de ${item.nombre}`}
-            >
-              <Text style={styles.nombre}>{item.nombre}</Text>
+              {categorias.map((categoria) => {
+                const seleccionada = categoriaSeleccionada === categoria.id;
 
-              <Text style={styles.descripcion}>{item.descripcionCorta}</Text>
+                return (
+                  <Pressable
+                    key={categoria.id}
+                    onPress={() => setCategoriaSeleccionada(categoria.id)}
+                    style={[
+                      styles.botonCategoria,
+                      seleccionada && styles.botonCategoriaSeleccionada,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.textoCategoria,
+                        seleccionada && styles.textoCategoriaSeleccionada,
+                      ]}
+                    >
+                      {categoria.nombre}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
 
-              <Text style={styles.direccion}>{item.direccion}</Text>
-            </Pressable>
-          )}
-        />
-      )}
+            {!cargando && !error && (
+              <>
+                <Text style={styles.tituloSeccion}>Mapa turístico</Text>
+
+                <MapaLugares
+                  lugares={lugaresFiltrados}
+                  onSeleccionarLugar={abrirDetalleLugar}
+                />
+
+                <Text style={styles.tituloSeccion}>Lugares turísticos</Text>
+              </>
+            )}
+          </View>
+        }
+        ListEmptyComponent={
+          cargando ? (
+            <ActivityIndicator size="large" />
+          ) : error ? (
+            <Text style={styles.error}>{error}</Text>
+          ) : (
+            <Text>No hay lugares disponibles.</Text>
+          )
+        }
+        renderItem={({ item }) => (
+          <Pressable
+            style={styles.tarjeta}
+            onPress={() => abrirDetalleLugar(item.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`Ver detalles de ${item.nombre}`}
+          >
+            <Text style={styles.nombre}>{item.nombre}</Text>
+
+            <Text style={styles.descripcion}>{item.descripcionCorta}</Text>
+
+            <Text style={styles.direccion}>{item.direccion}</Text>
+          </Pressable>
+        )}
+      />
     </SafeAreaView>
   );
 }
@@ -187,7 +228,8 @@ const styles = StyleSheet.create({
   contenedor: {
     flex: 1,
     backgroundColor: "#F5F7F5",
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   titulo: {
     fontSize: 28,
@@ -199,6 +241,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#555555",
     marginBottom: 24,
+  },
+  tituloSeccion: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#22543D",
+    marginBottom: 12,
   },
   lista: {
     paddingBottom: 24,
@@ -241,13 +289,11 @@ const styles = StyleSheet.create({
     color: "#333333",
     marginBottom: 16,
   },
-
   contenedorCategorias: {
     flexGrow: 0,
     height: 80,
     marginBottom: 16,
   },
-
   listaCategorias: {
     gap: 8,
     paddingRight: 12,
@@ -255,7 +301,6 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     alignItems: "center",
   },
-
   botonCategoria: {
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 16,
@@ -282,7 +327,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "bold",
   },
-
   botonAgenda: {
     backgroundColor: "#22543D",
     paddingVertical: 14,
@@ -292,7 +336,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 16,
   },
-
   textoBotonAgenda: {
     color: "#FFFFFF",
     fontSize: 16,
