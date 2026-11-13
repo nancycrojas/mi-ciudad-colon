@@ -1,3 +1,4 @@
+import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -16,7 +17,8 @@ import MapaLugares from "../../components/MapaLugares";
 import { obtenerCategorias } from "../../servicios/categorias";
 import { obtenerLugares } from "../../servicios/lugares";
 import type { Categoria } from "../../tipos/categorias";
-import type { Lugar } from "../../tipos/lugares";
+import type { Coordenadas, Lugar } from "../../tipos/lugares";
+import { calcularDistanciaKm } from "../../utils/distancias";
 
 export default function HomeScreen() {
   const [lugares, setLugares] = useState<Lugar[]>([]);
@@ -24,9 +26,14 @@ export default function HomeScreen() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
+  const [ordenarPorCercania, setOrdenarPorCercania] = useState(false);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<
     string | null
   >(null);
+  const [permisoUbicacion, setPermisoUbicacion] = useState(false);
+  const [ubicacionActual, setUbicacionActual] = useState<Coordenadas | null>(
+    null,
+  );
 
   const lugaresFiltrados = lugares.filter((lugar) => {
     const coincideNombre = lugar.nombre
@@ -39,6 +46,15 @@ export default function HomeScreen() {
 
     return coincideNombre && coincideCategoria;
   });
+
+  const lugaresOrdenados =
+    ordenarPorCercania && ubicacionActual
+      ? [...lugaresFiltrados].sort(
+          (a, b) =>
+            calcularDistanciaKm(ubicacionActual, a.coordenadas) -
+            calcularDistanciaKm(ubicacionActual, b.coordenadas),
+        )
+      : lugaresFiltrados;
 
   function abrirDetalleLugar(id: string) {
     router.push({
@@ -97,10 +113,46 @@ export default function HomeScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    let activo = true;
+
+    async function obtenerUbicacion() {
+      try {
+        const permiso = await Location.requestForegroundPermissionsAsync();
+
+        if (!activo) return;
+
+        const autorizado = permiso.status === "granted";
+        setPermisoUbicacion(autorizado);
+
+        if (!autorizado) return;
+
+        const posicion = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+        if (activo) {
+          setUbicacionActual({
+            latitud: posicion.coords.latitude,
+            longitud: posicion.coords.longitude,
+          });
+        }
+      } catch (error) {
+        console.error("Error al obtener la ubicación:", error);
+      }
+    }
+
+    void obtenerUbicacion();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   return (
     <SafeAreaView style={styles.contenedor}>
       <FlatList
-        data={cargando || error ? [] : lugaresFiltrados}
+        data={cargando || error ? [] : lugaresOrdenados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.lista}
         keyboardShouldPersistTaps="handled"
@@ -130,6 +182,19 @@ export default function HomeScreen() {
               autoCorrect={false}
               accessibilityLabel="Buscar lugares turísticos"
             />
+
+            <Pressable
+              style={styles.botonOrdenar}
+              onPress={() => setOrdenarPorCercania((anterior) => !anterior)}
+              disabled={!ubicacionActual}
+              accessibilityRole="button"
+            >
+              <Text style={styles.textoBotonOrdenar}>
+                {ordenarPorCercania
+                  ? "Orden: más cercanos primero ✓"
+                  : "Ordenar por cercanía"}
+              </Text>
+            </Pressable>
 
             <ScrollView
               horizontal
@@ -187,8 +252,9 @@ export default function HomeScreen() {
                 <Text style={styles.tituloSeccion}>Mapa turístico</Text>
 
                 <MapaLugares
-                  lugares={lugaresFiltrados}
+                  lugares={lugaresOrdenados}
                   onSeleccionarLugar={abrirDetalleLugar}
+                  permisoUbicacion={permisoUbicacion}
                 />
 
                 <Text style={styles.tituloSeccion}>Lugares turísticos</Text>
@@ -217,6 +283,15 @@ export default function HomeScreen() {
             <Text style={styles.descripcion}>{item.descripcionCorta}</Text>
 
             <Text style={styles.direccion}>{item.direccion}</Text>
+
+            <Text style={styles.distancia}>
+              {ubicacionActual
+                ? `A ${calcularDistanciaKm(
+                    ubicacionActual,
+                    item.coordenadas,
+                  ).toFixed(1)} km de tu ubicación`
+                : "Distancia no disponible"}
+            </Text>
           </Pressable>
         )}
       />
@@ -341,5 +416,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  distancia: {
+    fontSize: 13,
+    color: "#22543D",
+    fontWeight: "600",
+    marginTop: 10,
+  },
+  botonOrdenar: {
+    backgroundColor: "#E2EEE6",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  textoBotonOrdenar: {
+    color: "#22543D",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

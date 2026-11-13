@@ -1,5 +1,3 @@
-import * as Location from "expo-location";
-import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
@@ -8,33 +6,14 @@ import type { Lugar } from "../tipos/lugares";
 interface Props {
   lugares: Lugar[];
   onSeleccionarLugar: (id: string) => void;
+  permisoUbicacion: boolean;
 }
 
-export default function MapaLugares({ lugares, onSeleccionarLugar }: Props) {
-  const [permisoUbicacion, setPermisoUbicacion] = useState(false);
-
-  useEffect(() => {
-    let activo = true;
-
-    async function solicitarPermiso() {
-      try {
-        const permiso = await Location.requestForegroundPermissionsAsync();
-
-        if (activo) {
-          setPermisoUbicacion(permiso.status === "granted");
-        }
-      } catch (error) {
-        console.error("No se pudo solicitar el permiso de ubicación:", error);
-      }
-    }
-
-    void solicitarPermiso();
-
-    return () => {
-      activo = false;
-    };
-  }, []);
-
+export default function MapaLugares({
+  lugares,
+  onSeleccionarLugar,
+  permisoUbicacion,
+}: Props) {
   return (
     <View style={styles.contenedor}>
       <MapView
