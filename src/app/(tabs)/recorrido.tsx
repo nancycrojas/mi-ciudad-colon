@@ -2,7 +2,9 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -11,7 +13,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { USUARIO_LOCAL_ID } from "../../config/usuario";
 import { obtenerLugarPorId } from "../../servicios/lugares";
-import { obtenerVisitasPorUsuario } from "../../servicios/visitas";
+import {
+  eliminarVisita,
+  obtenerVisitasPorUsuario,
+} from "../../servicios/visitas";
 
 import type { Visita } from "../../tipos/visitas";
 
@@ -24,6 +29,7 @@ export default function RecorridoScreen() {
   const [visitas, setVisitas] = useState<VisitaConLugar[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [eliminandoId, setEliminandoId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -71,6 +77,49 @@ export default function RecorridoScreen() {
     }, []),
   );
 
+  function confirmarEliminacion(id: string, nombreLugar: string) {
+    Alert.alert(
+      "Eliminar visita",
+      `¿Querés eliminar la visita a ${nombreLugar} de tu recorrido?`,
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => {
+            void quitarVisita(id);
+          },
+        },
+      ],
+    );
+  }
+
+  async function quitarVisita(id: string) {
+    if (eliminandoId !== null) return;
+
+    setEliminandoId(id);
+
+    try {
+      await eliminarVisita(id);
+
+      setVisitas((anteriores) =>
+        anteriores.filter((item) => item.visita.id !== id),
+      );
+    } catch (error) {
+      console.error("Error al eliminar visita:", error);
+
+      Alert.alert(
+        "Error",
+        "No se pudo eliminar la visita. Intentá nuevamente.",
+      );
+    } finally {
+      setEliminandoId(null);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.contenedor}>
       <Text style={styles.titulo}>Mi recorrido</Text>
@@ -107,6 +156,22 @@ export default function RecorridoScreen() {
               {item.visita.nota && (
                 <Text style={styles.detalle}>Nota: {item.visita.nota}</Text>
               )}
+
+              <Pressable
+                style={styles.botonEliminar}
+                onPress={() =>
+                  confirmarEliminacion(item.visita.id, item.nombreLugar)
+                }
+                disabled={eliminandoId !== null}
+                accessibilityRole="button"
+                accessibilityLabel={`Eliminar visita a ${item.nombreLugar}`}
+              >
+                <Text style={styles.textoEliminar}>
+                  {eliminandoId === item.visita.id
+                    ? "Eliminando..."
+                    : "Eliminar visita"}
+                </Text>
+              </Pressable>
             </View>
           )}
         />
@@ -164,5 +229,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#444444",
     marginBottom: 6,
+  },
+  botonEliminar: {
+    borderWidth: 1,
+    borderColor: "#B00020",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    marginTop: 12,
+  },
+  textoEliminar: {
+    color: "#B00020",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
