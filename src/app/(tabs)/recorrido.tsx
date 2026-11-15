@@ -1,4 +1,4 @@
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -129,6 +129,15 @@ export default function RecorridoScreen() {
         Colón.
       </Text>
 
+      <Pressable
+        style={styles.botonEscanear}
+        onPress={() => router.push("/escanear-qr")}
+        accessibilityRole="button"
+        accessibilityLabel="Escanear código QR de un lugar turístico"
+      >
+        <Text style={styles.textoBotonEscanear}>Escanear código QR</Text>
+      </Pressable>
+
       {cargando ? (
         <ActivityIndicator size="large" />
       ) : error ? (
@@ -243,5 +252,17 @@ const styles = StyleSheet.create({
     color: "#B00020",
     fontSize: 14,
     fontWeight: "600",
+  },
+  botonEscanear: {
+    backgroundColor: "#22543D",
+    padding: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  textoBotonEscanear: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
