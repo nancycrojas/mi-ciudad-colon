@@ -83,3 +83,21 @@ export async function eliminarVisita(id: string): Promise<void> {
 
   await db.runAsync("DELETE FROM visitas WHERE id = ?", [id]);
 }
+
+export async function actualizarNotaVisita(
+  visitaId: string,
+  nota: string | null,
+): Promise<void> {
+  const db = await obtenerBaseDatos();
+
+  const resultado = await db.runAsync(
+    `UPDATE visitas
+     SET nota = ?, sincronizada = 0
+     WHERE id = ?`,
+    [nota, visitaId],
+  );
+
+  if (resultado.changes === 0) {
+    throw new Error("No se encontró la visita para actualizar.");
+  }
+}
