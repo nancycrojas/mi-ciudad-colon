@@ -21,6 +21,19 @@ async function inicializarBaseDatos(): Promise<SQLite.SQLiteDatabase> {
 
     CREATE INDEX IF NOT EXISTS idx_visitas_usuario
     ON visitas (usuarioId, fechaHora);
+
+
+    CREATE TABLE IF NOT EXISTS favoritos (
+    id TEXT PRIMARY KEY NOT NULL,
+    usuarioId TEXT NOT NULL,
+    lugarId TEXT NOT NULL,
+    creadoEn TEXT NOT NULL,
+    UNIQUE (usuarioId, lugarId)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_favoritos_usuario
+    ON favoritos (usuarioId, creadoEn);
+
   `);
 
   return db;

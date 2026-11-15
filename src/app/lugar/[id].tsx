@@ -11,11 +11,18 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { USUARIO_LOCAL_ID } from "../../config/usuario";
+import {
+  agregarFavorito,
+  eliminarFavorito,
+  obtenerFavoritoPorLugar,
+} from "../../servicios/favoritos";
+
 import { obtenerLugarPorId } from "../../servicios/lugares";
 import {
   obtenerVisitaPorLugar,
   registrarVisita,
 } from "../../servicios/visitas";
+import type { Favorito } from "../../tipos/favoritos";
 
 import type { Lugar } from "../../tipos/lugares";
 import type { Visita } from "../../tipos/visitas";
@@ -28,6 +35,8 @@ export default function DetalleLugarScreen() {
   const [error, setError] = useState<string | null>(null);
   const [visitado, setVisitado] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [esFavorito, setEsFavorito] = useState(false);
+  const [actualizandoFavorito, setActualizandoFavorito] = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -37,6 +46,7 @@ export default function DetalleLugarScreen() {
       setError(null);
       setLugar(null);
       setVisitado(false);
+      setEsFavorito(false);
 
       try {
         const datos = await obtenerLugarPorId(id);
@@ -46,14 +56,15 @@ export default function DetalleLugarScreen() {
           return;
         }
 
-        const visitaExistente = await obtenerVisitaPorLugar(
-          USUARIO_LOCAL_ID,
-          datos.id,
-        );
+        const [visitaExistente, favoritoExistente] = await Promise.all([
+          obtenerVisitaPorLugar(USUARIO_LOCAL_ID, datos.id),
+          obtenerFavoritoPorLugar(USUARIO_LOCAL_ID, datos.id),
+        ]);
 
         if (activo) {
           setLugar(datos);
           setVisitado(visitaExistente !== null);
+          setEsFavorito(favoritoExistente !== null);
         }
       } catch (error) {
         console.error("Error al cargar el lugar:", error);
@@ -120,6 +131,38 @@ export default function DetalleLugarScreen() {
     }
   }
 
+  async function alternarFavorito() {
+    if (!lugar || actualizandoFavorito) return;
+
+    setActualizandoFavorito(true);
+
+    try {
+      if (esFavorito) {
+        await eliminarFavorito(USUARIO_LOCAL_ID, lugar.id);
+        setEsFavorito(false);
+      } else {
+        const nuevoFavorito: Favorito = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          usuarioId: USUARIO_LOCAL_ID,
+          lugarId: lugar.id,
+          creadoEn: new Date().toISOString(),
+        };
+
+        await agregarFavorito(nuevoFavorito);
+        setEsFavorito(true);
+      }
+    } catch (error) {
+      console.error("Error al actualizar favorito:", error);
+
+      Alert.alert(
+        "Error",
+        "No se pudo actualizar el favorito. Intentá nuevamente.",
+      );
+    } finally {
+      setActualizandoFavorito(false);
+    }
+  }
+
   if (cargando) {
     return (
       <SafeAreaView style={styles.contenedor}>
@@ -160,6 +203,34 @@ export default function DetalleLugarScreen() {
               : visitado
                 ? "Lugar visitado ✓"
                 : "Marcar como visitado"}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.botonFavorito,
+            esFavorito && styles.botonFavoritoActivo,
+          ]}
+          onPress={() => void alternarFavorito()}
+          disabled={actualizandoFavorito}
+          accessibilityRole="button"
+          accessibilityLabel={
+            esFavorito
+              ? "Quitar lugar de favoritos"
+              : "Agregar lugar a favoritos"
+          }
+        >
+          <Text
+            style={[
+              styles.textoFavorito,
+              esFavorito && styles.textoFavoritoActivo,
+            ]}
+          >
+            {actualizandoFavorito
+              ? "Actualizando..."
+              : esFavorito
+                ? "★ Quitar de favoritos"
+                : "☆ Agregar a favoritos"}
           </Text>
         </Pressable>
 
@@ -254,5 +325,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#444444",
     padding: 20,
+  },
+  botonFavorito: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#22543D",
+    padding: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  botonFavoritoActivo: {
+    backgroundColor: "#E2EEE6",
+  },
+  textoFavorito: {
+    color: "#22543D",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  textoFavoritoActivo: {
+    color: "#22543D",
   },
 });
